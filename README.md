@@ -125,12 +125,11 @@ If `BACKUP_LOCATION` = `S3` then the following options are used.
 | Parameter       | Description                                                                             |
 | --------------- | --------------------------------------------------------------------------------------- |
 | `S3_BUCKET`     | S3 Bucket name e.g. 'mybucket'                                                          |
-| `S3_HOSTNAME`   | Hostname of S3 Server e.g "s3.amazonaws.com" - You can also include a port if necessary |
+| `S3_HOST`       | Hostname of S3 Server e.g "s3.amazonaws.com" - You can also include a port if necessary |
 | `S3_KEY_ID`     | S3 Key ID                                                                               |
 | `S3_KEY_SECRET` | S3 Key Secret                                                                           |
 | `S3_PATH`       | S3 Pathname to save to e.g. '`backup`'                                                  |
-| `S3_PROTOCOL`   | Use either `http` or `https` to access service - Default `https`                        |
-| `S3_URI_STYLE`  | Choose either `VIRTUALHOST` or `PATH` style - Default `VIRTUALHOST`                     |
+| `S3_OPTIONS`    | S3 CLI Options                                                                          |
 
 ## Maintenance
 

@@ -83,15 +83,16 @@ SPLIT_DB=${SPLIT_DB:-FALSE}
 tmpdir=/tmp/backups
 
 if [ "$BACKUP_TYPE" = "S3" ] || [ "$BACKUP_TYPE" = "s3" ] || [ "$BACKUP_TYPE" = "MINIO" ] || [ "$BACKUP_TYPE" = "minio" ] ; then
-    S3_PROTOCOL=${S3_PROTOCOL:-"https"}
     sanity_var S3_HOST "S3 Host"
     sanity_var S3_BUCKET "S3 Bucket"
     sanity_var S3_KEY_ID "S3 Key ID"
     sanity_var S3_KEY_SECRET "S3 Key Secret"
-    sanity_var S3_URI_STYLE "S3 URI Style (Virtualhost or Path)"
     sanity_var S3_PATH "S3 Path"
+    sanity_var S3_OPTIONS "S3 CLI Options"
     file_env 'S3_KEY_ID'
     file_env 'S3_KEY_SECRET'
+    aws configure set aws_access_key_id ${S3_KEY_ID}
+    aws configure set aws_secret_access_key ${S3_KEY_SECRET}
 fi
 
 if [ "$1" = "NOW" ]; then
@@ -411,34 +412,13 @@ move_backup() {
             mv ${tmpdir}/"${target}" "${DB_DUMP_TARGET}"/"${target}"
         ;;
         "S3" | "s3" | "MINIO" | "minio" )
-            s3_content_type="application/octet-stream"
-            if [ "$S3_URI_STYLE" = "VIRTUALHOST" ] || [ "$S3_URI_STYLE" = "VHOST" ] || [ "$S3_URI_STYLE" = "virtualhost" ] || [ "$S3_URI_STYLE" = "vhost" ] ; then
-                s3_url="${S3_BUCKET}.${S3_HOST}"
-            else
-                s3_url="${S3_HOST}/${S3_BUCKET}"
-            fi
-
             if var_true "$MD5" ; then
-                s3_date="$(LC_ALL=C date -u +"%a, %d %b %Y %X %z")"
-                s3_md5="$(libressl md5 -binary < "${tmpdir}/${target}.md5" | base64)"
-                sig="$(printf "PUT\n$s3_md5\n${s3_content_type}\n$s3_date\n/$S3_BUCKET/$S3_PATH/${target}.md5" | libressl sha1 -binary -hmac "${S3_KEY_SECRET}" | base64)"
                 print_debug "Uploading ${target}.md5 to S3"
-                curl -T "${tmpdir}/${target}.md5" "${S3_PROTOCOL}"://"${s3_url}"/"${S3_PATH}"/"${target}".md5 \
-                     -H "Date: $date" \
-                     -H "Authorization: AWS ${S3_KEY_ID}:$sig" \
-                     -H "Content-Type: ${s3_content_type}" \
-                     -H "Content-MD5: ${s3_md5}"
+                aws ${S3_OPTIONS} --endpoint-url ${S3_HOST} s3 cp "${tmpdir}/${target}.md5" "s3://${S3_HOST}/${S3_PATH}/${target}.md5"
             fi
 
-            s3_date="$(LC_ALL=C date -u +"%a, %d %b %Y %X %z")"
-            s3_md5="$(libressl md5 -binary < "${tmpdir}/${target}" | base64)"
-            sig="$(printf "PUT\n$s3_md5\n${s3_content_type}\n$s3_date\n/$S3_BUCKET/$S3_PATH/${target}" | libressl sha1 -binary -hmac "${S3_KEY_SECRET}" | base64)"
             print_debug "Uploading ${target} to S3"
-            curl -T ${tmpdir}/"${target}" "${S3_PROTOCOL}"://"${s3_url}"/"${S3_PATH}"/"${target}" \
-                 -H "Date: $s3_date" \
-                 -H "Authorization: AWS ${S3_KEY_ID}:$sig" \
-                 -H "Content-Type: ${s3_content_type}" \
-                 -H "Content-MD5: ${s3_md5}"
+            aws ${S3_OPTIONS} --endpoint-url ${S3_HOST} s3 cp "${tmpdir}/${target}" "s3://${S3_HOST}/${S3_PATH}/${target}"
 
             rm -rf ${tmpdir}/*.md5
             rm -rf ${tmpdir}/"${target}"

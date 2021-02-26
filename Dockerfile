@@ -17,6 +17,7 @@ RUN set -ex && \
                git \
                libarchive-dev \
                xz-dev \
+               awscli \
                && \
     \
     apk add --no-cache -t .db-backup-run-deps \
