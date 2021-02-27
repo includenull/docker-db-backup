@@ -129,6 +129,7 @@ If `BACKUP_LOCATION` = `S3` then the following options are used.
 | `S3_KEY_ID`     | S3 Key ID                                                                               |
 | `S3_KEY_SECRET` | S3 Key Secret                                                                           |
 | `S3_PATH`       | S3 Pathname to save to e.g. '`backup`'                                                  |
+| `S3_PROTOCOL`   | Use either `http` or `https` to access service - Default `https`                        |
 | `S3_OPTIONS`    | S3 CLI Options                                                                          |
 
 ## Maintenance
